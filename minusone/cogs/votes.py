@@ -53,8 +53,6 @@ class Votes(
             else:
                 await message.add_reaction("❌")
 
-        await self.bot.process_commands(message)
-
     # endregion
 
     # region Commands
