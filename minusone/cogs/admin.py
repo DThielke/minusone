@@ -46,21 +46,21 @@ class Admin(commands.Cog, name="admin"):
     @commands.is_owner()
     async def load(self, ctx: commands.Context, cog: str) -> None:
         """Load a cog"""
-        self.bot.load_extension(f"cogs.{cog}")
+        await self.bot.load_extension(f"minusone.cogs.{cog}")
         await ctx.send(f"Loaded {cog}")
 
     @commands.command(name="unload")
     @commands.is_owner()
     async def unload(self, ctx: commands.Context, cog: str) -> None:
         """Unload a cog"""
-        self.bot.unload_extension(f"cogs.{cog}")
+        await self.bot.unload_extension(f"minusone.cogs.{cog}")
         await ctx.send(f"Unloaded {cog}")
 
     @commands.command(name="reload")
     @commands.is_owner()
     async def reload(self, ctx: commands.Context, cog: str) -> None:
         """Reload a cog"""
-        self.bot.reload_extension(f"cogs.{cog}")
+        await self.bot.reload_extension(f"minusone.cogs.{cog}")
         await ctx.send(f"Reloaded {cog}")
 
 
