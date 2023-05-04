@@ -1,0 +1,18 @@
+{
+    "bot": {
+        "command_prefix": "!",
+        "intents": [
+            "message_content",
+            "members"
+        ]
+    },
+    "database": {
+        "path": "minusone.db"
+    },
+    "cogs": {
+        "votes": {
+            "initial_votes": 10,
+            "mpl_stylesheet": "dark_fivethirtyeight"
+        }
+    }
+}
