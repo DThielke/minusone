@@ -387,10 +387,18 @@ class Votes(
     def _try_vote(self, timestamp, source_user_id, target_user_id, votes):
         """Try to vote for a user"""
         available_votes = self._get_available_votes(source_user_id)
-        if available_votes < votes:
+        if available_votes < abs(votes):
+            logger.info(
+                f"User {self.bot.get_user(source_user_id)} failed to give {self.bot.get_user(target_user_id)} {votes} "
+                f"votes out of {available_votes} left"
+            )
             return False
         self._record_vote(timestamp, source_user_id, target_user_id, votes)
         self._add_available_votes(source_user_id, -abs(votes))
+        logger.info(
+            f"User {self.bot.get_user(source_user_id)} gave {self.bot.get_user(target_user_id)} {votes} "
+            f"votes out of {available_votes} left"
+        )
         return True
 
     def _get_total_votes_for_user(self, user_id):
