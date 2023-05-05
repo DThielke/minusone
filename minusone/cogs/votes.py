@@ -31,6 +31,10 @@ class Votes(
 
     async def cog_load(self):
         self._create_tables()
+        self.reset_available_votes.start()
+
+    async def cog_unload(self):
+        self.reset_available_votes.cancel()
 
     # region Listeners
 
