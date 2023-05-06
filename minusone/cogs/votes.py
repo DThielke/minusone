@@ -138,7 +138,7 @@ class Votes(
         public: Optional[bool] = False,
     ):
         """Plot the voting history of a user"""
-        await interaction.response.defer(ephemeral=True)
+        await interaction.response.defer(ephemeral=not public)
         user = user or interaction.user
         vote_history = self._get_vote_history_for_user(user.id)
         if vote_history.empty:
