@@ -446,7 +446,7 @@ class Votes(
         cursor = self.bot.database.execute(query)
         results = cursor.fetchall()
         df = pd.DataFrame(results, columns=["timestamp", "source_user_id", "votes"])
-        df["timestamp"] = pd.to_datetime(df["timestamp"])
+        df["timestamp"] = pd.to_datetime(df["timestamp"], yearfirst=True, utc=True, format="ISO8601")
         return df
 
     def _reset_all_available_votes(self):
