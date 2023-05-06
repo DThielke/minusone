@@ -13,7 +13,8 @@
         "votes": {
             "initial_votes": 10,
             "mpl_stylesheet": "dark_fivethirtyeight",
-            "trial_category_id": 496792134427475974
+            "trial_category_id": 496792134427475974,
+            "chart_timezone": "US/Eastern"
         }
     }
 }

@@ -242,13 +242,7 @@ class Votes(
     def _plot_ohlc(self, ohlc: pd.DataFrame, ax: plt.Axes = None, title=None, ewma_span=22):
         _, ax = plt.subplots()
 
-        span = ohlc.index.max() - ohlc.index.min()
-        if span > pd.Timedelta("21 days"):
-            bar_width_offset = pd.offsets.Minute(int(0.4 * 24 * 60))
-        elif span > pd.Timedelta("1 day"):
-            bar_width_offset = pd.offsets.Minute(int(0.4 * 60))
-        else:
-            bar_width_offset = pd.offsets.Second(int(0.4 * 60))
+        bar_width_offset = ohlc.index.freq * 0.4
 
         color = "#2CA453"
         prev_close = 0
@@ -293,15 +287,32 @@ class Votes(
         ax.get_figure().tight_layout()
         return ax
 
-    def _plot_vote_history(self, vote_history: pd.DataFrame, title: Optional[str] = None):
-        span = vote_history["timestamp"].max() - vote_history["timestamp"].min()
-        if span > pd.Timedelta("21 days"):
+    def _get_plot_frequency(self, span: pd.Timedelta, max_bars: int):
+        seconds = span.total_seconds()
+
+        if seconds / (24 * 60 * 60) > max_bars:
+            freq = "W"
+        elif seconds / (12 * 60 * 60) > max_bars:
             freq = "D"
-        elif span > pd.Timedelta("1 day"):
+        elif seconds / (6 * 60 * 60) > max_bars:
+            freq = "12H"
+        elif seconds / (60 * 60) > max_bars:
+            freq = "6H"
+        elif seconds / 60 > max_bars:
             freq = "H"
-        else:
+        elif seconds > max_bars:
             freq = "T"
+        else:
+            freq = "S"
+
+        return freq
+
+    def _plot_vote_history(self, vote_history: pd.DataFrame, title: Optional[str] = None):
+        vote_history.loc[len(vote_history)] = pd.Series({"timestamp": pd.Timestamp.utcnow(), "votes": 0})
+        span = vote_history["timestamp"].max() - vote_history["timestamp"].min()
+        freq = self._get_plot_frequency(span, max_bars=50)
         ohlc = self._timeseries_to_ohlc(vote_history.set_index("timestamp")["votes"].sort_index().cumsum(), freq=freq)
+        ohlc = ohlc.tz_convert(self.config["chart_timezone"])
         with plt.style.context(f"minusone.resources.{self.config['mpl_stylesheet']}"):
             ax = self._plot_ohlc(ohlc, title=title)
         return ax
