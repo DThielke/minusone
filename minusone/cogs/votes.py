@@ -242,7 +242,11 @@ class Votes(
     def _plot_ohlc(self, ohlc: pd.DataFrame, ax: plt.Axes = None, title=None, ewma_span=22):
         _, ax = plt.subplots()
 
-        bar_width_offset = ohlc.index.freq * 0.4
+        if ohlc.index.freq.is_anchored():
+            t0 = pd.Timestamp.now() + ohlc.index.freq
+            bar_width_offset = pd.DateOffset(seconds=(t0 + ohlc.index.freq - t0).total_seconds() * 0.4)
+        else:
+            bar_width_offset = ohlc.index.freq * 0.4
 
         color = "#2CA453"
         prev_close = 0
@@ -290,6 +294,8 @@ class Votes(
     def _get_plot_frequency(self, span: pd.Timedelta, max_bars: int):
         seconds = span.total_seconds()
 
+        if seconds / (7 * 24 * 60 * 60) > max_bars:
+            freq = "M"
         if seconds / (24 * 60 * 60) > max_bars:
             freq = "W"
         elif seconds / (12 * 60 * 60) > max_bars:
