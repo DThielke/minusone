@@ -87,25 +87,26 @@ class Votes(
         interaction: discord.Interaction,
         public: Optional[bool] = False,
         limit: Optional[int] = 10,
+        received: Optional[bool] = True,
     ):
         """Shows the current leaderboard"""
-        await interaction.response.defer(ephemeral=True)
+        await interaction.response.defer(ephemeral=not public)
         limit = min(limit, 50)
-        top_data = self._get_leaderboard(limit, top=True)
-        bottom_data = self._get_leaderboard(limit, top=False)
-        user_count = self._get_user_count()
+        top_data = self._get_leaderboard(limit, top=True, received=received)
+        bottom_data = self._get_leaderboard(limit, top=False, received=received)
+        user_count = self._get_user_count(received)
         if top_data.empty or bottom_data.empty:
             await interaction.followup.send("No leaderboard data available.", ephemeral=True)
             return
-        embed = discord.Embed(title="Leaderboard", color=0x2CA453)
+        embed = discord.Embed(title=f"Leaderboard - Votes *{'Received' if received else 'Issued'}*", color=0x2CA453)
         top = []
         for i, row in enumerate(top_data.itertuples()):
-            top.append(f"{i + 1}. {self.bot.get_user(row.user_id).mention} ({int(row.votes)} votes)")
+            top.append(f"{i + 1}. {self.bot.get_user(row.user_id).mention} ({int(row.votes)} points)")
         top = "\n".join(top)
         bottom = []
         for i, row in enumerate(bottom_data.itertuples()):
             rank = user_count - len(bottom_data) + i + 1
-            bottom.append(f"{rank}. {self.bot.get_user(row.user_id).mention} ({int(row.votes)} votes)")
+            bottom.append(f"{rank}. {self.bot.get_user(row.user_id).mention} ({int(row.votes)} points)")
         bottom = "\n".join(bottom)
         embed.add_field(
             name=f"Top {len(top_data)} Users",
@@ -371,12 +372,12 @@ class Votes(
         """
         self.bot.database.execute(query)
 
-    def _get_leaderboard(self, limit=10, top=True):
+    def _get_leaderboard(self, limit=10, top=True, received=True):
         """Get the leaderboard"""
         query = f"""
-            SELECT target_user_id, SUM(votes) AS votes
+            SELECT {'target_user_id' if received else 'source_user_id'}, SUM(votes) AS votes
             FROM vote_history
-            GROUP BY target_user_id
+            GROUP BY {'target_user_id' if received else 'source_user_id'}
             ORDER BY votes {'DESC' if top else 'ASC'}
             LIMIT {limit}
         """
@@ -386,10 +387,10 @@ class Votes(
         df = df.sort_values("votes", ascending=False)
         return df
 
-    def _get_user_count(self):
+    def _get_user_count(self, received=True):
         """Get the number of users"""
-        query = """
-            SELECT COUNT(DISTINCT target_user_id)
+        query = f"""
+            SELECT COUNT(DISTINCT {'target_user_id' if received else 'source_user_id'})
             FROM vote_history
         """
         result = self.bot.database.execute(query).fetchone()
