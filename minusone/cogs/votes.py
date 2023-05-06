@@ -61,6 +61,13 @@ class Votes(
 
     # region Commands
 
+    @commands.command(name="resetavailablevotes")
+    @commands.is_owner()
+    async def reset_available(self, ctx: commands.Context):
+        """Reset available votes for all users"""
+        self._reset_all_available_votes()
+        await ctx.send("Reset available votes for all users")
+
     @app_commands.command(name="left")
     async def left(self, interaction: discord.Interaction):
         """Check how many votes you have left"""
