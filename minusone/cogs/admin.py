@@ -1,7 +1,10 @@
+import logging
 from typing import Literal, Optional
 
 import discord
 from discord.ext import commands
+
+logger = logging.getLogger(__name__)
 
 
 class Admin(commands.Cog, name="admin"):
@@ -13,6 +16,7 @@ class Admin(commands.Cog, name="admin"):
     @commands.command(name="sync")
     @commands.is_owner()
     async def sync(
+        self,
         ctx: commands.Context,
         guilds: commands.Greedy[discord.Object],
         spec: Optional[Literal["~", "*", "^"]] = None,
