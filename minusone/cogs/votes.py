@@ -75,6 +75,7 @@ class Votes(
         await interaction.response.send_message(f"You have {votes} votes left today.", ephemeral=True)
 
     @app_commands.command(name="tally")
+    @app_commands.describe(user="whose votes to tally")
     async def tally(self, interaction: discord.Interaction, user: discord.User = None):
         """Check how many votes a user has received"""
         user = user or interaction.user
@@ -82,6 +83,11 @@ class Votes(
         await interaction.response.send_message(f"Current vote tally for <@{user.id}>: {tally}", ephemeral=True)
 
     @app_commands.command(name="leaderboard")
+    @app_commands.describe(
+        public="show the leaderboard publicly?",
+        limit="the number of users to show",
+        received="show votes received (True) or issued (False)?",
+    )
     async def leaderboard(
         self,
         interaction: discord.Interaction,
@@ -132,6 +138,10 @@ class Votes(
         )
 
     @app_commands.command(name="chart")
+    @app_commands.describe(
+        user="whose votes to chart",
+        public="show the leaderboard publicly?",
+    )
     async def votes_chart(
         self,
         interaction: discord.Interaction,
