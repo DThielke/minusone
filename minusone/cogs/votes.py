@@ -18,6 +18,23 @@ from minusone.bot import DiscordBot
 logger = logging.getLogger(__name__)
 
 
+EMOJIS = {
+    "fail": "❌",
+    "upvote": "🔼",
+    "downvote": "🔽",
+    1: "1️⃣",
+    2: "2️⃣",
+    3: "3️⃣",
+    4: "4️⃣",
+    5: "5️⃣",
+    6: "6️⃣",
+    7: "7️⃣",
+    8: "8️⃣",
+    9: "9️⃣",
+    10: "🔟",
+}
+
+
 class Votes(
     commands.GroupCog,
     name="votes",
@@ -44,18 +61,24 @@ class Votes(
         if message.author == self.bot.user:
             return
 
-        parsed_message = await self.parse_message(message)
+        parsed_message = await self._parse_message(message)
         if parsed_message is not None:
-            target, vote = parsed_message
+            target, votes = parsed_message
             result = self._try_vote(
                 message.created_at,
                 message.author.id,
                 target.id,
-                vote,
+                votes,
             )
-            if result:
-                await message.add_reaction("✅")
+            if result > 0:
+                await message.add_reaction(EMOJIS["upvote"])
+                await message.add_reaction(EMOJIS[abs(result)])
+            elif result < 0:
+                await message.add_reaction(EMOJIS["downvote"])
+                await message.add_reaction(EMOJIS[abs(result)])
             else:
+                await message.add_reaction(EMOJIS["fail"])
+
         for auto_vote in self.config["auto_votes"]:
             if self._check_auto_vote(auto_vote, message):
                 logger.info(
@@ -189,7 +212,7 @@ class Votes(
 
     # region Message Parsing
 
-    async def parse_message(self, message: discord.Message):
+    async def _parse_message(self, message: discord.Message):
         content = message.content
         cleaned = re.sub(r"<@(.*?)>", "", content).strip()[:10]
 
@@ -449,18 +472,16 @@ class Votes(
         """Try to vote for a user"""
         available_votes = self._get_available_votes(source_user_id)
         if available_votes < abs(votes):
-            logger.info(
-                f"User {self.bot.get_user(source_user_id)} failed to give {self.bot.get_user(target_user_id)} {votes} "
-                f"votes out of {available_votes} left"
-            )
-            return False
+            votes = available_votes if votes > 0 else -available_votes
+        if votes == 0:
+            return 0
         self._record_vote(timestamp, source_user_id, target_user_id, votes)
         self._add_available_votes(source_user_id, -abs(votes))
         logger.info(
             f"User {self.bot.get_user(source_user_id)} gave {self.bot.get_user(target_user_id)} {votes} "
             f"votes out of {available_votes} left"
         )
-        return True
+        return votes
 
     def _get_total_votes_for_user(self, user_id):
         """Get the total number of votes for a user"""
