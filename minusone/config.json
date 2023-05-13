@@ -14,7 +14,21 @@
             "initial_votes": 10,
             "mpl_stylesheet": "dark_fivethirtyeight",
             "trial_category_id": 496792134427475974,
-            "chart_timezone": "US/Eastern"
+            "chart_timezone": "US/Eastern",
+            "auto_votes": [
+                {
+                    "contains": "fire",
+                    "channel_id": 764712886274621460,
+                    "user_id": 305104734019256321,
+                    "votes": -1
+                },
+                {
+                    "contains": "test",
+                    "channel_id": 518230765537067008,
+                    "user_id": 126862455375659008,
+                    "votes": -1
+                }
+            ]
         }
     }
 }

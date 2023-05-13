@@ -56,7 +56,12 @@ class Votes(
             if result:
                 await message.add_reaction("✅")
             else:
-                await message.add_reaction("❌")
+        for auto_vote in self.config["auto_votes"]:
+            if self._check_auto_vote(auto_vote, message):
+                logger.info(
+                    f"Detected '{auto_vote['contains']}'! Auto-voting for {auto_vote['user_id']} ({auto_vote['votes']} points)"
+                )
+                self._record_vote(message.created_at, self.bot.user.id, message.author.id, auto_vote["votes"])
 
     # endregion
 
@@ -219,6 +224,17 @@ class Votes(
 
     def _is_trial_channel(self, message: discord.Message):
         return message.channel.category_id == self.config["trial_category_id"]
+
+    def _check_auto_vote(self, config: dict, message: discord.Message):
+        if config["user_id"] and message.author.id != config["user_id"]:
+            return False
+        if config["channel_id"] and message.channel.id != config["channel_id"]:
+            return False
+        if config["contains"] and not config["contains"] in message.content:
+            return False
+        if config["votes"] == 0:
+            return False
+        return True
 
     # endregion
 
