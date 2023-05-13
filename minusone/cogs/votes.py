@@ -7,6 +7,7 @@ from typing import Optional
 import discord
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
 import pandas as pd
 import pytz
 from discord import app_commands
@@ -246,7 +247,7 @@ class Votes(
             t0 = pd.Timestamp.now() + ohlc.index.freq
             bar_width_offset = pd.DateOffset(seconds=(t0 + ohlc.index.freq - t0).total_seconds() * 0.4)
         else:
-            bar_width_offset = ohlc.index.freq * 0.4
+            bar_width_offset = ohlc.index.freq * 0.5
 
         color = "#2CA453"
         prev_close = 0
@@ -284,6 +285,7 @@ class Votes(
         formatter = mdates.ConciseDateFormatter(locator)
         ax.xaxis.set_major_locator(locator)
         ax.xaxis.set_major_formatter(formatter)
+        ax.yaxis.set_major_locator(mticker.MaxNLocator(integer=True))
 
         if title:
             ax.set_title(title, loc="left", fontsize="large")
@@ -314,7 +316,11 @@ class Votes(
         return freq
 
     def _plot_vote_history(self, vote_history: pd.DataFrame, title: Optional[str] = None):
+        vote_history.loc[len(vote_history)] = pd.Series(
+            {"timestamp": vote_history["timestamp"].min() - pd.DateOffset(seconds=1), "votes": 0}
+        )
         vote_history.loc[len(vote_history)] = pd.Series({"timestamp": pd.Timestamp.utcnow(), "votes": 0})
+        vote_history = vote_history.sort_values("timestamp")
         span = vote_history["timestamp"].max() - vote_history["timestamp"].min()
         freq = self._get_plot_frequency(span, max_bars=50)
         ohlc = self._timeseries_to_ohlc(vote_history.set_index("timestamp")["votes"].sort_index().cumsum(), freq=freq)
