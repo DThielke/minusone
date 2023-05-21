@@ -247,6 +247,15 @@ class Votes(
     def _is_trial_channel(self, message: discord.Message):
         return message.channel.category_id == self.config["trial_category_id"]
 
+    async def _get_trial_user_id(self, channel: discord.TextChannel):
+        messages = [x async for x in channel.history(limit=1, oldest_first=True)]
+        if len(messages) == 0 or not messages[0].author.bot:
+            return
+        name, discriminator = messages[0].embeds[0].fields[4].value.split("#")
+        members = await channel.guild.query_members(name, limit=100)
+        user = discord.utils.get(members, name=name, discriminator=discriminator)
+        return user
+
     def _check_auto_vote(self, config: dict, message: discord.Message):
         if config["user_id"] and message.author.id != config["user_id"]:
             return False
