@@ -71,10 +71,8 @@ class Votes(
                 votes,
             )
             if result > 0:
-                await message.add_reaction(EMOJIS["upvote"])
                 await message.add_reaction(EMOJIS[abs(result)])
             elif result < 0:
-                await message.add_reaction(EMOJIS["downvote"])
                 await message.add_reaction(EMOJIS[abs(result)])
             else:
                 await message.add_reaction(EMOJIS["fail"])
@@ -82,7 +80,8 @@ class Votes(
         for auto_vote in self.config["auto_votes"]:
             if self._check_auto_vote(auto_vote, message):
                 logger.info(
-                    f"Detected '{auto_vote['contains']}'! Auto-voting for {auto_vote['user_id']} ({auto_vote['votes']} points)"
+                    f"Detected '{auto_vote['contains']}'! Auto-voting for {auto_vote['user_id']} "
+                    f"({auto_vote['votes']} points)"
                 )
                 self._record_vote(message.created_at, self.bot.user.id, message.author.id, auto_vote["votes"])
 
