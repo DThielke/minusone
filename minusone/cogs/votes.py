@@ -80,7 +80,7 @@ class Votes(
         for auto_vote in self.config["auto_votes"]:
             if self._check_auto_vote(auto_vote, message):
                 logger.info(
-                    f"Detected '{auto_vote['contains']}'! Auto-voting for {auto_vote['user_id']} "
+                    f"Detected '{auto_vote['contains']}'! Auto-voting for {message.author.name} "
                     f"({auto_vote['votes']} points)"
                 )
                 self._record_vote(message.created_at, self.bot.user.id, message.author.id, auto_vote["votes"])
@@ -140,7 +140,8 @@ class Votes(
         bottom = []
         for i, row in enumerate(bottom_data.itertuples()):
             rank = user_count - len(bottom_data) + i + 1
-            bottom.append(f"{rank}. {self.bot.get_user(row.user_id).mention} ({int(row.votes)} points)")
+            user = self.bot.get_user(row.user_id)
+            bottom.append(f"{rank}. {'*user not found*' if user is None else user.mention} ({int(row.votes)} points)")
         bottom = "\n".join(bottom)
         embed.add_field(
             name=f"Top {len(top_data)} Users",
@@ -369,7 +370,7 @@ class Votes(
         vote_history.loc[len(vote_history)] = pd.Series({"timestamp": pd.Timestamp.utcnow(), "votes": 0})
         vote_history = vote_history.sort_values("timestamp")
         span = vote_history["timestamp"].max() - vote_history["timestamp"].min()
-        freq = self._get_plot_frequency(span, max_bars=50)
+        freq = self._get_plot_frequency(span, max_bars=100)
         ohlc = self._timeseries_to_ohlc(vote_history.set_index("timestamp")["votes"].sort_index().cumsum(), freq=freq)
         ohlc = ohlc.tz_convert(self.config["chart_timezone"])
         with plt.style.context(f"minusone.resources.{self.config['mpl_stylesheet']}"):

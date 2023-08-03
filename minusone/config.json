@@ -24,6 +24,9 @@
                 }
             ]
         },
-        "post": {}
+        "post": {
+            "changelog_channel_id": 1110076297201319986,
+            "mpl_stylesheet": "dark_fivethirtyeight"
+        }
     }
 }
