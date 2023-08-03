@@ -18,9 +18,9 @@
             "auto_votes": [
                 {
                     "contains": "fire",
-                    "channel_id": 764712886274621460,
+                    "channel_id": null,
                     "user_id": 305104734019256321,
-                    "votes": -1
+                    "votes": -10
                 }
             ]
         },
