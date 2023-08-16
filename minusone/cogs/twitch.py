@@ -49,12 +49,12 @@ class Twitch(
         channel = self.bot.get_channel(self.config["stream_channel_id"])
         message = await channel.send(f"{user.display_name} ({activity.twitch_name}) is live: {activity.url}")
         self.stream_posts[user.id] = message
-        logger.info(f"Streams: {self.stream_posts}")
+        logger.info(f"Streams: { {k: v.content for k, v in self.stream_posts.items()} }")
 
     async def cancel_stream(self, user: discord.Member) -> None:
         logger.info(f"Cancelling stream from {user.name}")
         await self.stream_posts.pop(user.id).delete()
-        logger.info(f"Streams: {self.stream_posts}")
+        logger.info(f"Streams: { {k: v.content for k, v in self.stream_posts.items()} }")
 
 
 async def setup(bot: commands.Bot):
