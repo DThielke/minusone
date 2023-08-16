@@ -1,3 +1,4 @@
+import asyncio
 import io
 import logging
 from collections import defaultdict
@@ -24,6 +25,12 @@ class Post(
         self.bot = bot
 
         self.config: dict = self.bot.config["cogs"][self.__cog_name__.lower()]
+
+        self.ctx_menu = app_commands.ContextMenu(name="Edit Post", callback=self.edit_context_menu)
+        self.bot.tree.add_command(self.ctx_menu)
+
+    async def cog_unload(self) -> None:
+        self.bot.tree.remove_command(self.ctx_menu.name, type=self.ctx_menu.type)
 
     # region Commands
 
@@ -88,7 +95,7 @@ class Post(
     @app_commands.describe(source="link to message with new content")
     @app_commands.describe(keep_embeds="keep embeds from the source message")
     async def edit(self, interaction: discord.Interaction, destination: str, source: str, keep_embeds: bool = True):
-        """Creates a new post in the specified channel"""
+        """Edits an existing bot post"""
         try:
             dest_channel_id = int(destination.split("/")[-2])
             dest_message_id = int(destination.split("/")[-1])
@@ -119,15 +126,56 @@ class Post(
             embed.set_image(url=attachment.url)
             embeds.append(embed)
         await dest_message.edit(content=source_message.content, embeds=embeds)
-        await interaction.response.send_message(f"Edited post: {dest_message.jump_url}", ephemeral=True)
+        await interaction.response.send_message(
+            f"Edited post: {dest_message.jump_url}", ephemeral=True, suppress_embeds=True
+        )
 
         changelog_channel = self.bot.get_channel(self.config["changelog_channel_id"])
         await changelog_channel.send(
-            f"{interaction.user.mention} edited post: {dest_message.jump_url}. Original Content:\n\n"
+            f"{interaction.user.name} edited post: {dest_message.jump_url}. Original Content:\n\n"
             f"{source_message.content}",
             silent=True,
             suppress_embeds=True,
         )
+
+    async def edit_context_menu(self, interaction: discord.Interaction, message: discord.Message):
+        """Edits an existing bot post"""
+        if message.author != self.bot.user:
+            await interaction.user.send("Can only edit posts by the bot.", ephemeral=True, delete_after=5)
+            return
+
+        bot_message = await interaction.user.send(
+            f"Editing post: {message.jump_url}. You have 10 minutes to reply with new content.", suppress_embeds=True
+        )
+        await interaction.response.send_message(
+            f"Edit started. Reply here: {bot_message.jump_url}.",
+            ephemeral=True,
+            suppress_embeds=True,
+            delete_after=600,
+        )
+        try:
+            reply = await self.bot.wait_for(
+                "message", timeout=600, check=lambda m: m.author == interaction.user and not m.guild
+            )
+            keep_embeds = True  # TODO: make configurable
+            embeds = message.embeds if keep_embeds else []
+            for attachment in message.attachments:
+                embed = discord.Embed(url="http://dummy.url")
+                embed.set_image(url=attachment.url)
+                embeds.append(embed)
+            await message.edit(content=reply.content, embeds=embeds)
+            await interaction.delete_original_response()
+            await interaction.user.send("Edit complete.")
+
+            changelog_channel = self.bot.get_channel(self.config["changelog_channel_id"])
+            await changelog_channel.send(
+                f"{interaction.user.name} edited post: {message.jump_url}. Original Content:\n\n{reply.content}",
+                silent=True,
+                suppress_embeds=True,
+            )
+        except asyncio.TimeoutError:
+            await interaction.user.send("Edit timed out.")
+            return
 
     @app_commands.command(name="count")
     @app_commands.checks.has_any_role("OEM Officer")
