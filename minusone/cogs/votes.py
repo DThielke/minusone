@@ -58,6 +58,9 @@ class Votes(
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
+        if not message.guild:
+            return
+
         if message.author == self.bot.user:
             return
 
